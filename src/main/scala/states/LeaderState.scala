@@ -12,21 +12,22 @@ class LeaderState(node: Node) extends State(node) {
 
   override def init(): Unit = {
     future = scheduledExecutorService.scheduleAtFixedRate(
-      () => Connector.sendAcknowledge(node), 0, 10, TimeUnit.MILLISECONDS)
+      () => node.synchronized { Connector.sendAcknowledge(node) }, 0, 10, TimeUnit.MILLISECONDS)
   }
 
-  override def voteForLeader(candidateNodeId: UUID, candidateTerm: Long): Boolean = {
-    if (candidateTerm > node.term.get()) {
-      node.term.set(candidateTerm)
-      prepareToSwitchState()
-      val followerState = new FollowerState(candidateNodeId, node)
-      node.transitToState(followerState)
-      followerState.init()
+  override def voteForLeader(candidateNodeId: UUID, candidateTerm: Long): Boolean =
+    node.synchronized {
+      if (candidateTerm > node.term.get()) {
+        node.term.set(candidateTerm)
+        prepareToSwitchState()
+        val followerState = new FollowerState(candidateNodeId, node)
+        node.transitToState(followerState)
+        followerState.init()
 
-      return true
+        return true
+      }
+      false
     }
-    false
-  }
 
   override def prepareToSwitchState(): Unit = future.cancel(true)
 

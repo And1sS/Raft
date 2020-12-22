@@ -8,8 +8,8 @@ import java.util.concurrent.{Executors, ScheduledFuture, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
 
 class CandidateState(node: Node) extends State(node) {
-//  private val votes = new AtomicInteger(0)
-//  private val lastVotingTerm = node.term
+  //  private val votes = new AtomicInteger(0)
+  //  private val lastVotingTerm = node.term
 
   private val scheduledExecutorService = Executors.newScheduledThreadPool(1)
   private var future: ScheduledFuture[_] = null
@@ -30,19 +30,20 @@ class CandidateState(node: Node) extends State(node) {
     )
   }
 
-  override def voteForLeader(candidateNodeId: UUID, candidateTerm: Long): Boolean = {
-    if (candidateTerm > node.term.get()) {
-      node.term.set(candidateTerm)
-      future.cancel(true)
+  override def voteForLeader(candidateNodeId: UUID, candidateTerm: Long): Boolean =
+    node.synchronized {
+      if (candidateTerm > node.term.get()) {
+        node.term.set(candidateTerm)
+        prepareToSwitchState()
 
-      val followerState = new FollowerState(candidateNodeId, node)
-      node.transitToState(followerState)
-      followerState.init()
+        val followerState = new FollowerState(candidateNodeId, node)
+        node.transitToState(followerState)
+        followerState.init()
 
-      return true
+        return true
+      }
+      false
     }
-    false
-  }
 
   private def processLeaderElectionTimeout(): Unit = {
     println(s"Node ${node.id} processed leader election timeout")
@@ -50,10 +51,10 @@ class CandidateState(node: Node) extends State(node) {
     initiateLeaderElection()
   }
 
-  private def initiateLeaderElection(): Unit = {
+  private def initiateLeaderElection(): Unit = node.synchronized {
     node.term.incrementAndGet()
     if (Connector.initiateLeaderElection(node)) {
-      future.cancel(true)
+      prepareToSwitchState()
       val leaderState = new LeaderState(node)
       node.transitToState(leaderState)
       leaderState.init()

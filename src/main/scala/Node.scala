@@ -14,14 +14,19 @@ class Node {
 
   state.init()
 
-  def transitToState(state: State): Unit = {
+  def transitToState(state: State): Unit = this.synchronized {
     this.state = state
     println(s"Node $id transiting to state: $state")
   }
 
   def voteForLeader(candidateNodeId: UUID, candidateTerm: Long): Boolean =
-    state.voteForLeader(candidateNodeId, candidateTerm)
+    this.synchronized {
+      state.voteForLeader(candidateNodeId, candidateTerm)
+    }
 
-  def processAcknowledge(nodeId: UUID, nodeTerm: Long): Unit =
-    state.processAcknowledge(nodeId, nodeTerm)
+  def processAcknowledge(nodeId: UUID, nodeTerm: Long): Unit = {
+    this.synchronized {
+      state.processAcknowledge(nodeId, nodeTerm)
+    }
+  }
 }
