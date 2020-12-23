@@ -30,7 +30,15 @@ class LeaderState(node: Node) extends State(node) {
     false
   }
 
+  override def saveMessage(message: String): Boolean = {
+    Connector.replicateMessage(node, message)
+    node.replicationLog = node.replicationLog :+ message
+    true
+  }
+
   override def prepareToSwitchState(): Unit = future.cancel(true)
+
+  override def processReplicationRequest(message: String): Boolean = false
 
   override def toString: String = "Leader state"
 }

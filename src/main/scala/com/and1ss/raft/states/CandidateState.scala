@@ -42,7 +42,7 @@ class CandidateState(node: Node) extends State(node) {
   }
 
   private def processLeaderElectionTimeout(): Unit = {
-    println(s"Node ${node.id} processed leader election timeout")
+    Logger.log(s"Node ${node.id} processed leader election timeout")
     resetElectionTimer()
     initiateLeaderElection()
   }

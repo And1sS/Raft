@@ -10,7 +10,7 @@ abstract class State(val node: Node) {
 
   def processAcknowledge(nodeId: UUID, nodeTerm: Long): Unit = {
     if (nodeTerm > node.term.get()) {
-      println(s"Node: ${node.id}, processed acknowledge packet.")
+      Logger.log(s"Node: ${node.id}, processed acknowledge packet.")
       prepareToSwitchState()
       node.term.set(nodeTerm)
 
@@ -18,6 +18,14 @@ abstract class State(val node: Node) {
       node.transitToState(followerState)
       followerState.init()
     }
+  }
+
+  def saveMessage(message: String): Boolean = false
+
+  def processReplicationRequest(message: String): Boolean = {
+    Logger.log(s"Processing replication request $message")
+    node.replicationLog = node.replicationLog :+ message
+    true
   }
 }
 
