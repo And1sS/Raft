@@ -30,7 +30,7 @@ class CandidateState(node: Node) extends State(node) {
   override def voteForLeader(candidateNodeId: UUID, candidateTerm: Long): Boolean = {
     if (candidateTerm > node.term.get()) {
       node.term.set(candidateTerm)
-      prepareToSwitchState()
+      future.cancel(true)
 
       val followerState = new FollowerState(candidateNodeId, node)
       node.transitToState(followerState)
@@ -48,8 +48,9 @@ class CandidateState(node: Node) extends State(node) {
   }
 
   private def initiateLeaderElection(): Unit = {
+    node.term.incrementAndGet()
     if (Connector.initiateLeaderElection(node)) {
-      prepareToSwitchState()
+      future.cancel(true)
       val leaderState = new LeaderState(node)
       node.transitToState(leaderState)
       leaderState.init()

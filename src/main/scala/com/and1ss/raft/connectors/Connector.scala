@@ -22,6 +22,7 @@ object Connector {
     Logger.log(s"Initiated leader election for ${initiatorNode.id}")
     var votes = 1
     var voted = 1
+    val initialTerm = initiatorNode.term.get()
     var result = false
 
     nodesPorts.foreach(nodePort => {
@@ -35,7 +36,7 @@ object Connector {
         case _ => ()
       }
 
-      if (2 * votes > voted) {
+      if (2 * votes > voted && initiatorNode.term.get() == initialTerm) {
         result = true
       }
     })

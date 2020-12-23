@@ -50,7 +50,7 @@ object MainController {
     },
     path("state") {
       get {
-        complete(node.state.toString)
+        complete(node.state.toString + " " + node.term.get())
       }
     },
     path("messages") {
