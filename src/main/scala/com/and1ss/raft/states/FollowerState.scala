@@ -34,6 +34,7 @@ class FollowerState(var leaderNodeId: UUID, node: Node) extends State(node) {
 
   override def processAcknowledge(nodeId: UUID, nodeTerm: Long): Unit = {
     if (nodeTerm >= node.term.get() && nodeId.equals(leaderNodeId)) {
+      node.term.set(nodeTerm)
       Logger.log(s"Node: ${node.id}, processed acknowledge packet.")
       resetElectionTimer()
     }
@@ -42,6 +43,7 @@ class FollowerState(var leaderNodeId: UUID, node: Node) extends State(node) {
   private def processLeaderElectionTimeout(): Unit = {
     Logger.log(s"Node ${node.id} processed leader election timeout")
     future.cancel(true)
+    node.term.incrementAndGet()
     val candidateState = new CandidateState(node)
     node.transitToState(candidateState)
     candidateState.init()

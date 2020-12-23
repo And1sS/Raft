@@ -48,7 +48,6 @@ class CandidateState(node: Node) extends State(node) {
   }
 
   private def initiateLeaderElection(): Unit = {
-    node.term.incrementAndGet()
     if (Connector.initiateLeaderElection(node)) {
       prepareToSwitchState()
       val leaderState = new LeaderState(node)
